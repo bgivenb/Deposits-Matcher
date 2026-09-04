@@ -1,35 +1,42 @@
-# DepositsMatcher
+# Deposits Matcher
 
-DepositsMatcher is a standalone application and Python-based tool designed to assist in accounting and bookkeeping tasks. It helps users match deposit amounts between two lists, identifying any discrepancies. 
+[![Tests](https://github.com/bgivenb/Deposits-Matcher/actions/workflows/test.yml/badge.svg)](https://github.com/bgivenb/Deposits-Matcher/actions/workflows/test.yml)
 
-## Features
+Deposits Matcher is a small desktop utility for reconciling two lists of currency amounts. It finds the largest exact subset total shared by both lists, marks the entries involved, reports what remains unmatched, and can export the result to Excel.
 
-- **List Input**: Users can input deposit amounts into two separate lists, List A and List B.
-- **Subset Matching**: Finds matching subset totals between the two lists.
-- **Discrepancy Detection**: Highlights any unmatched or remaining amounts in both lists.
-- **Help Button**: A brief description of the app's functions is accessible via the "Help" button.
+> This is a hobby utility, not accounting advice or a substitute for review in a system of record.
 
-## Usage
+## Why the matching core is careful
 
-1. **Input the number of deposits** for each list (List A and List B) in the respective fields.
-2. **Click "Generate Deposit Fields"** to create input fields for entering deposit amounts.
-3. **Enter deposit values** in each field.
-4. **Click "Find Maximum Matching Sum"** to see the result, which shows the maximum matching sum and any discrepancies.
+- Currency is parsed with Python `Decimal` and compared as integer cents—never binary floating point.
+- Duplicate amounts retain distinct entry identities.
+- Invalid, negative, non-finite, and fractional-cent inputs are rejected.
+- The algorithm finds the maximum common subset total rather than stopping at the first match.
+- Matching logic is independent of Tkinter and covered by unit tests.
 
-## Installation
+## Run from source
 
-### Standalone Executable
-
-A standalone executable version is available, allowing you to run the application without needing Python installed.
-
-### Running from Source
-
-To run from source, you’ll need Python 3 and the following dependencies:
-- `tkinter`
-- `Pillow`
-
-Install dependencies and run:
+Requirements: Python 3.11 or newer. Tkinter is included with the standard Python installers on Windows and macOS.
 
 ```bash
-pip install pillow
+python -m venv .venv
+source .venv/bin/activate  # Windows PowerShell: .venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 python depositsmatcher.py
+```
+
+## Validate
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+The subset search is exponential, so the interface intentionally limits each list to 20 entries. This makes the boundary explicit instead of implying that arbitrarily large reconciliations will finish quickly.
+
+## Legacy archives
+
+The two checked-in macOS ZIP files are historical snapshots and are not the canonical source or current release channel. They have not yet been reproduced from this revised source; use the source version above for evaluation. Future binaries should be built reproducibly and published as versioned GitHub Release assets with checksums.
+
+## License
+
+This repository currently uses the [Creative Commons Attribution-NonCommercial 4.0 license](LICENSE). That choice is unusual for software and should be reviewed before wider reuse or release packaging.
