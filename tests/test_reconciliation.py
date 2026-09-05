@@ -398,10 +398,16 @@ class StoreTests(unittest.TestCase):
 
     def test_unrelated_sqlite_database_is_not_modified(self):
         path = Path(self.temp.name) / "unrelated.sqlite3"
-        with sqlite3.connect(path) as connection:
+        connection = sqlite3.connect(path)
+        try:
             connection.execute("CREATE TABLE important(value TEXT)")
+            connection.commit()
+        finally:
+            connection.close()
+        original = path.read_bytes()
         with self.assertRaisesRegex(ValueError, "not an empty"):
             Store(path)
+        self.assertEqual(path.read_bytes(), original)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 """Real Tk widget checks, opt-in because they require a display server."""
 
+import gc
 import os
 from pathlib import Path
 import tempfile
@@ -23,7 +24,15 @@ class WorkbenchTests(unittest.TestCase):
         self.app = Workbench(self.root)
         self.app.filename = str(Path(self.temp.name) / "workspace.sqlite3")
         self.addCleanup(self.temp.cleanup)
-        self.addCleanup(self.root.destroy)
+        self.addCleanup(self.close_widgets)
+
+    def close_widgets(self):
+        self.root.destroy()
+        self.app = None
+        self.root = None
+        # Multiple Tk interpreters are created in this suite. Collect their
+        # widget cycles on the owning thread, not in a later SQLite worker.
+        gc.collect()
 
     def wait_for_worker(self):
         deadline = time.monotonic() + 5
@@ -31,6 +40,7 @@ class WorkbenchTests(unittest.TestCase):
             self.root.update()
             time.sleep(0.01)
         self.assertFalse(self.app.busy)
+        self.assertIsNone(self.app.worker)
 
     def load_example(self):
         root = Path(__file__).resolve().parents[1]
@@ -107,7 +117,12 @@ class LegacyCalculatorTests(unittest.TestCase):
 
         root = tk.Tk()
         root.withdraw()
-        self.addCleanup(root.destroy)
+
+        def cleanup():
+            root.destroy()
+            gc.collect()
+
+        self.addCleanup(cleanup)
         app = DepositsMatcherApp(root)
         for entries in [app.entries_a, app.entries_b]:
             for index, (entry, _) in enumerate(entries):

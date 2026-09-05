@@ -21,6 +21,7 @@ class Workbench:
         self.filename = None
         self.report = None
         self.events = queue.Queue()
+        self.worker = None
         self.busy = False
         root.protocol("WM_DELETE_WINDOW", self.close)
         self.buttons = []
@@ -125,6 +126,7 @@ class Workbench:
         for button in self.buttons:
             button.configure(state="disabled")
         filename = self.filename
+        events = self.events
         self.status.set("Working locally…")
 
         def worker():
@@ -132,11 +134,12 @@ class Workbench:
                 with Store(filename) as store:
                     outcome = operation(store)
                     report = store.report()
-                self.events.put((report, outcome, None))
+                events.put((report, outcome, None))
             except Exception as exc:
-                self.events.put((None, None, str(exc)))
+                events.put((None, None, str(exc)))
 
-        threading.Thread(target=worker, daemon=True).start()
+        self.worker = threading.Thread(target=worker, daemon=True)
+        self.worker.start()
 
     def poll(self):
         try:
@@ -144,6 +147,10 @@ class Workbench:
         except queue.Empty:
             pass
         else:
+            # The worker has published its last result. Finish its teardown before
+            # enabling another operation or letting the Tk interpreter close.
+            self.worker.join()
+            self.worker = None
             self.busy = False
             for button in self.buttons:
                 button.configure(state="normal")
