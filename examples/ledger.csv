@@ -1,0 +1,9 @@
+id,date,amount,currency,account,reference,description
+L-001,2026-08-03,100.00,USD,operating,INV-100,Invoice 100 receipt
+L-002,2026-08-04,80.00,USD,operating,,Needs source identification
+L-003,2026-08-05,60.00,USD,operating,BATCH-7,Processor receipt one
+L-004,2026-08-05,90.00,USD,operating,BATCH-7,Processor receipt two
+L-005,2026-08-05,200.00,USD,operating,BATCH-9,Split bank receipt
+L-006,2026-08-07,55.00,USD,operating,REF-B,Same amount different reference
+L-007,2026-08-20,70.00,USD,operating,OLD,Posting date outside policy
+L-008,2026-08-03,100.00,EUR,operating,EUR-1,Euro receipt

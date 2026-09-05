@@ -3,3 +3,16 @@ __pycache__/
 .venv/
 .DS_Store
 *.xlsx
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.db
+*.db-wal
+*.db-shm
+dist/
+.coverage
+htmlcov/
+.ruff_cache/
+*.egg-info/
+build/
+private-data/

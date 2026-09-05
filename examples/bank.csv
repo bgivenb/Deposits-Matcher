@@ -1,0 +1,11 @@
+id,date,amount,currency,account,reference,description
+B-001,2026-08-03,100.00,USD,operating,INV-100,Customer invoice settlement
+B-002,2026-08-04,80.00,USD,operating,,Unidentified deposit A
+B-003,2026-08-04,80.00,USD,operating,,Unidentified deposit B
+B-004,2026-08-05,150.00,USD,operating,BATCH-7,Processor batch deposit
+B-005,2026-08-05,45.00,USD,operating,BATCH-9,First split deposit
+B-006,2026-08-06,155.00,USD,operating,BATCH-9,Second split deposit
+B-007,2026-08-07,33.00,USD,operating,MISSING,No ledger entry yet
+B-008,2026-08-07,55.00,USD,operating,REF-A,Reference conflicts with ledger
+B-009,2026-08-01,70.00,USD,operating,OLD,Outside posting window
+B-010,2026-08-03,100.00,EUR,operating,EUR-1,Separate currency balance

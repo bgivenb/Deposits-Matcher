@@ -9,10 +9,46 @@ permissions:
 
 jobs:
   test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.11", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m unittest discover -s tests -v
+      - run: python scripts/demo.py
+      - run: python scripts/package_release.py
+      - run: python -m pip install .
+      - run: deposits-reconcile --help
+      - run: python -I scripts/installed_smoke.py
+
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-      - run: python -m unittest discover -s tests -v
+      - run: python -m pip install ruff==0.12.12
+      - run: ruff check matching.py reconcile workbench.py tests scripts
+      - run: ruff format --check matching.py reconcile workbench.py tests scripts
+      - run: python scripts/benchmark.py
+
+  desktop:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Tk and virtual display
+        timeout-minutes: 5
+        run: |
+          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update
+          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install --no-install-recommends -y python3-tk xvfb xauth
+      - name: Exercise the actual Tk review workflow
+        env:
+          DEPOSITS_GUI_TEST: "1"
+        run: xvfb-run -a /usr/bin/python3 -m unittest discover -s tests -p test_workbench.py -v

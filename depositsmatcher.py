@@ -183,12 +183,16 @@ class DepositsMatcherApp:
                 row, text=f"{prefix}{index + 1}", width=4, bg=PANEL, fg=MUTED
             ).pack(side="left")
             amount = tk.Entry(row, bg=ENTRY, fg=TEXT, insertbackground=TEXT)
+            amount.bind("<KeyRelease>", self.invalidate_result)
             amount.pack(side="left", fill="x", expand=True, padx=6)
             status = tk.Label(row, text="", width=10, bg=PANEL, fg=MUTED)
             status.pack(side="left")
             entries.append((amount, status))
 
     def paste_values(self, list_name: str) -> None:
+        if str(self.match_button["state"]) == "disabled":
+            return
+        self.invalidate_result()
         entries = self.entries_a if list_name == "A" else self.entries_b
         try:
             values = [
@@ -206,7 +210,14 @@ class DepositsMatcherApp:
             if index < len(values):
                 entry.insert(0, values[index])
 
+    def invalidate_result(self, _event=None) -> None:
+        self.result = None
+        for _entry, status in self.entries_a + self.entries_b:
+            status.configure(text="", fg=MUTED)
+        self.result_text.set("Inputs changed. Run the matcher again before exporting.")
+
     def calculate(self) -> None:
+        self.invalidate_result()
         try:
             self.amounts_a = parse_amounts(entry.get() for entry, _ in self.entries_a)
             self.amounts_b = parse_amounts(entry.get() for entry, _ in self.entries_b)
@@ -215,6 +226,8 @@ class DepositsMatcherApp:
             return
 
         self.match_button.configure(state="disabled")
+        for entry, _status in self.entries_a + self.entries_b:
+            entry.configure(state="disabled")
         self.generate_button.configure(state="disabled")
         self.progress.start(10)
         self.active_job += 1
@@ -250,12 +263,16 @@ class DepositsMatcherApp:
         self.root.after(100, self._poll_worker)
 
     def _calculation_failed(self, exc: Exception) -> None:
+        for entry, _status in self.entries_a + self.entries_b:
+            entry.configure(state="normal")
         self.progress.stop()
         self.match_button.configure(state="normal")
         self.generate_button.configure(state="normal")
         messagebox.showerror("Matching failed", str(exc))
 
     def _render_result(self, result: MatchResult) -> None:
+        for entry, _status in self.entries_a + self.entries_b:
+            entry.configure(state="normal")
         self.progress.stop()
         self.match_button.configure(state="normal")
         self.generate_button.configure(state="normal")

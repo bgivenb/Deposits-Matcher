@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
+import re
 from typing import Iterable, Sequence
 
 
@@ -27,11 +28,18 @@ class MatchResult:
 def parse_amount(value: str) -> Decimal:
     """Parse a non-negative currency value with at most two decimal places."""
 
-    cleaned = value.strip().replace(",", "")
+    cleaned = value.strip()
     if cleaned.startswith("$"):
         cleaned = cleaned[1:].strip()
     if not cleaned:
         raise ValueError("Amount cannot be empty.")
+    if not re.fullmatch(
+        r"(?:\d{1,12}|\d{1,3}(?:,\d{3}){1,3})(?:\.\d{1,2})?", cleaned, flags=re.ASCII
+    ):
+        raise ValueError(
+            "Use a non-negative amount, at most 12 integer digits and two decimal places."
+        )
+    cleaned = cleaned.replace(",", "")
 
     try:
         amount = Decimal(cleaned)
@@ -61,10 +69,7 @@ def _subset_sums(amounts: Sequence[Decimal]) -> dict[int, int]:
     sums: dict[int, int] = {0: 0}
     for index, amount in enumerate(amounts):
         cents = _to_cents(amount)
-        additions = [
-            (total + cents, mask | (1 << index))
-            for total, mask in sums.items()
-        ]
+        additions = [(total + cents, mask | (1 << index)) for total, mask in sums.items()]
         for total, mask in additions:
             existing = sums.get(total)
             if existing is None or bin(mask).count("1") < bin(existing).count("1"):
@@ -76,9 +81,7 @@ def _indices(mask: int, length: int) -> tuple[int, ...]:
     return tuple(index for index in range(length) if mask & (1 << index))
 
 
-def find_maximum_match(
-    amounts_a: Sequence[Decimal], amounts_b: Sequence[Decimal]
-) -> MatchResult:
+def find_maximum_match(amounts_a: Sequence[Decimal], amounts_b: Sequence[Decimal]) -> MatchResult:
     """Find the largest equal subset total without reusing an entry.
 
     Each list is limited to 20 entries because subset matching is exponential.
@@ -86,11 +89,13 @@ def find_maximum_match(
     """
 
     if len(amounts_a) > MAX_DEPOSITS_PER_LIST or len(amounts_b) > MAX_DEPOSITS_PER_LIST:
-        raise ValueError(
-            f"At most {MAX_DEPOSITS_PER_LIST} deposits are supported per list."
-        )
+        raise ValueError(f"At most {MAX_DEPOSITS_PER_LIST} deposits are supported per list.")
     if any(
-        amount < 0 or amount.quantize(CENT) != amount
+        not isinstance(amount, Decimal)
+        or not amount.is_finite()
+        or amount < 0
+        or amount > Decimal("999999999999.99")
+        or amount.quantize(CENT) != amount
         for amount in (*amounts_a, *amounts_b)
     ):
         raise ValueError("Amounts must be non-negative currency values in cents.")

@@ -1,0 +1,6 @@
+include README.md LICENSE SECURITY.md CHANGELOG.md requirements.txt
+recursive-include examples *.csv
+recursive-include scripts *.py
+recursive-include tests *.py
+recursive-include docs *.md *.png
+global-exclude *.pyc

@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=77,<83"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "deposits-matcher"
+version = "3.0.0"
+description = "Local-first deposit reconciliation with bounded matching, human review, and SQLite audit evidence"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "CC-BY-NC-4.0"
+license-files = ["LICENSE"]
+authors = [{name = "Given Borthwick"}]
+dependencies = []
+
+[project.scripts]
+deposits-reconcile = "reconcile.__main__:main"
+
+[tool.setuptools]
+packages = ["reconcile"]
+py-modules = ["matching", "workbench", "depositsmatcher"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
